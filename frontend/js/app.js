@@ -106,6 +106,8 @@ async function checkChain() {
     chainId = 4;
   } else if(chain === 'polygon') {
     chainId = 137;
+  } else if (chain === 'mainnet') {
+    chainId = 1;
   }
   if (window.ethereum.networkVersion !== chainId) {
     try {
