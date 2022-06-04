@@ -223,7 +223,7 @@ async function loadInfo() {
   }, 1000);
 
   let priceType = '';
-  if(chain === 'rinkeby') {
+  if(chain === 'rinkeby' || chain === 'mainnet') {
     priceType = 'ETH';
   } else if (chain === 'polygon') {
     priceType = 'MATIC';
@@ -288,7 +288,7 @@ function setTotalPrice() {
   const totalPriceWei = BigInt(info.deploymentConfig.mintPrice) * BigInt(mintInputValue);
   
   let priceType = '';
-  if(chain === 'rinkeby') {
+  if(chain === 'rinkeby' || chain === 'mainnet') {
     priceType = 'ETH';
   } else if (chain === 'polygon') {
     priceType = 'MATIC';
@@ -326,7 +326,16 @@ async function mint() {
           countdownContainer.classList.add('hidden');
           mintedContainer.classList.remove('hidden');
         }
-        console.log("Minuted successfully!", `Transaction Hash: ${mintTransaction.transactionHash}`);
+        else if (chain === 'mainnet') {
+        const url = `https://etherscan.io/tx/${mintTransaction.transactionHash}`;
+        const mintedContainer = document.querySelector('.minted-container');
+        const countdownContainer = document.querySelector('.countdown');
+        const mintedTxnBtn = document.getElementById("mintedTxnBtn");
+        mintedTxnBtn.href = url;
+        countdownContainer.classList.add('hidden');
+        mintedContainer.classList.remove('hidden');
+      }
+      console.log("Minuted successfully!", `Transaction Hash: ${mintTransaction.transactionHash}`);
       } else {
         const mainText = document.getElementById("mainText");
         mainText.innerText = mint_failed;
@@ -354,8 +363,12 @@ async function mint() {
         .presaleMint(amount, merkleJson)
         .send({ from: window.address, value: value.toString() });
       if(presaleMintTransaction) {
-        if(chain === 'rinkeby') {
-          const url = `https://rinkeby.etherscan.io/tx/${presaleMintTransaction.transactionHash}`;
+        if(chain === 'rinkeby' || chain === 'mainnet') {
+          if (chain === 'rinkeby') {
+            const url = `https://rinkeby.etherscan.io/tx/${presaleMintTransaction.transactionHash}`;
+          } else {
+            const url = `https://etherscan.io/tx/${presaleMintTransaction.transactionHash}`;
+          }
           const mintedContainer = document.querySelector('.minted-container');
           const countdownContainer = document.querySelector('.countdown');
           const mintedTxnBtn = document.getElementById("mintedTxnBtn");
