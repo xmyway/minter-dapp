@@ -156,9 +156,8 @@ async function checkChain() {
 
 async function loadInfo() {
   window.info = await window.contract.methods.getInfo().call();
-  const freeMintActive = await contract.methods.freeMintActive().call();
+  // const freeMintActive = await contract.methods.freeMintActive().call();
   const publicMintActive = await contract.methods.publicSaleActive().call();
-  // const presaleMintActive = await contract.methods.presaleActive().call();
   const mainHeading = document.getElementById("mainHeading");
   const subHeading = document.getElementById("subHeading");
   const mainText = document.getElementById("mainText");
@@ -175,53 +174,18 @@ async function loadInfo() {
     mintButton.innerText = button_public_mint;
     mintContainer.classList.remove('hidden');
     setTotalPrice();
-  } else if (presaleMintActive) {
-    startTime = window.info.runtimeConfig.publicMintStart;
-    mainHeading.innerText = h1_presale_mint;
-    subHeading.innerText = h2_presale_mint;
-    
-    try {
-      // CHECK IF WHITELISTED
-      const merkleData = await fetch(
-        `/.netlify/functions/merkleProof/?wallet=${window.address}&chain=${chain}&contract=${contractAddress}`
-      );
-      const merkleJson = await merkleData.json();
-      const whitelisted = await contract.methods.isWhitelisted(window.address, merkleJson).call();
-      if(!whitelisted) {
-        mainText.innerText = p_presale_mint_not_whitelisted;
-        actionButton.innerText = button_presale_mint_not_whitelisted;
-      } else {
-        mainText.innerText = p_presale_mint_whitelisted;
-        actionButton.classList.add('hidden');
-        mintButton.innerText = button_presale_mint_whitelisted;
-        mintContainer.classList.remove('hidden');
-      }
-    } catch(e) {
-      // console.log(e);
-      mainText.innerText = p_presale_mint_already_minted;
-      actionButton.innerText = button_presale_already_minted;
-    }
-    setTotalPrice();
   } else {
-    startTime = window.info.runtimeConfig.presaleMintStart;
-    mainHeading.innerText = h1_presale_coming_soon;
+    // startTime = window.info.runtimeConfig.presaleMintStart;
+    mainHeading.innerText = h1_psale_coming_soon;
     subHeading.innerText = h2_presale_coming_soon;
     mainText.innerText = p_presale_coming_soon;
     actionButton.innerText = button_presale_coming_soon;
   }
 
-  const clockdiv = document.getElementById("countdown");
-  clockdiv.setAttribute("data-date", startTime);
-  countdown();
 
   // HIDE SPINNER
   spinner.classList.add('hidden');
 
-  // SHOW CARD
-  setTimeout(() => {
-    const countdownCard = document.querySelector('.countdown');
-    countdownCard.classList.add('show-card');
-  }, 1000);
 
   let priceType = '';
   if(chain === 'rinkeby' || chain === 'mainnet') {
@@ -308,8 +272,7 @@ async function mint() {
 
   const amount = parseInt(document.getElementById("mintInput").value);
   const value = BigInt(info.deploymentConfig.mintPrice) * BigInt(amount);
-  const publicMintActive = await contract.methods.mintingActive().call();
-  const presaleMintActive = await contract.methods.presaleActive().call();
+  const publicMintActive = await contract.methods.publicSaleActive().call();
 
   if (publicMintActive) {
     // PUBLIC MINT
@@ -352,47 +315,6 @@ async function mint() {
       mintButton.disabled = false;
 
       console.log(e);
-    }
-  } else if (presaleMintActive) {
-    // PRE-SALE MINTING
-    try {
-      const merkleData = await fetch(
-        `/.netlify/functions/merkleProof/?wallet=${window.address}&chain=${chain}&contract=${contractAddress}`
-      );
-      const merkleJson = await merkleData.json();
-      const presaleMintTransaction = await contract.methods
-        .presaleMint(amount, merkleJson)
-        .send({ from: window.address, value: value.toString() });
-      if(presaleMintTransaction) {
-        if(chain === 'rinkeby' || chain === 'mainnet') {
-          if (chain === 'rinkeby') {
-            const url = `https://rinkeby.etherscan.io/tx/${presaleMintTransaction.transactionHash}`;
-          } else {
-            const url = `https://etherscan.io/tx/${presaleMintTransaction.transactionHash}`;
-          }
-          const mintedContainer = document.querySelector('.minted-container');
-          const countdownContainer = document.querySelector('.countdown');
-          const mintedTxnBtn = document.getElementById("mintedTxnBtn");
-          mintedTxnBtn.href = url;
-          countdownContainer.classList.add('hidden');
-          mintedContainer.classList.remove('hidden');
-        }
-        console.log("Minuted successfully!", `Transaction Hash: ${presaleMintTransaction.transactionHash}`);
-      } else {
-        const mainText = document.getElementById("mainText");
-        mainText.innerText = mint_failed;
-        mintButton.innerText = button_presale_mint_whitelisted;
-        mintButton.disabled = false;
-
-        console.log("Failed to mint!");
-      }
-    } catch(e) {
-      const mainText = document.getElementById("mainText");
-      mainText.innerText = mint_failed;
-      mintButton.innerText = button_presale_mint_whitelisted;
-      mintButton.disabled = false;
-
-      // console.log(e);
     }
   }
 }
